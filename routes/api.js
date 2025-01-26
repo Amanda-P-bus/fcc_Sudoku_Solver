@@ -14,39 +14,35 @@ module.exports = function (app) {
         {res.json({ error: 'Required field(s) missing' })}
 
       let puzzleLength = puzzle.length;
+      let row = coordinate[0]; //letter
+      let col = coordinate[1]; //number
+      let coordLength = coordinate.length;
+      let validTrue = solver.validate(puzzle);
 
       if (puzzleLength !== 81) 
         { res.json({error: "Expected puzzle to be 81 characters long"});  }
      
-      if (solver.validate(puzzle) === false) 
+      if (!validTrue) 
         { return res.json({ error: 'Invalid characters in puzzle' })}
 
-      if (solver.validate(puzzle) === true)
-        {res.json({valid: true});}
-   
-      let row = coordinate[0]; //letter
-      let col = coordinate[1]; //number
-      let coordLength = coordinate.length;
-      if (coordLength !== 2) 
-        {res.json({ error: 'Invalid coordinate'})}
-      
-      if (row.length === 1 && solver.checkRowPlacement(puzzle, row, col, value) === true)
-      {res.json({valid: true});
-    console.log(/[0-9]/.test(col))
-      }
-
-      if (solver.checkRowPlacement(puzzle, row, col, value) === false)
-        {res.json({ error: 'Invalid coordinate'})}
-
-
-      if (col.length === 1 && solver.checkColPlacement(puzzle, row, col, value) === true)
-        {res.json({valid: true});}
   
-        if (solver.checkColPlacement(puzzle, row, col, value) === false)
-          {res.json({ error: 'Invalid coordinate'})}
+  //start true false checks to try to work on headers issue
+     // let headers = req.headers;     ??
+      // console.log(headers)     ??
+ 
+     let coordTrue = (coordLength === 2);
+     let rowTrue = solver.checkRowPlacement(puzzle, row, col, value);
+     let colTrue = solver.checkColPlacement(puzzle, row, col, value);
+    // let regionTrue = solver.checkRegionPlacement(puzzle, row, col, value);
+
+      console.log(validTrue, coordTrue, rowTrue, colTrue);
+      console.log("validTrue: " + validTrue, "coordTrue," + coordTrue, "rowTrue: " + rowTrue, "colTrue: " + colTrue);
+
+    if (!rowTrue || !colTrue || !coordTrue)
+      {res.json({ error: 'Invalid coordinate'})}
       
-     
-     // solver.checkRowPlacement(puzzle, row, value) + "check check";
+    //if (rowTrue && colTrue && coordTrue)
+    //{}
       
       console.log(row, col)
 
