@@ -31,30 +31,55 @@ module.exports = function (app) {
       // console.log(headers)     ??
  
      let coordTrue = (coordLength === 2);
-     let rowTrue = solver.checkRowPlacement(puzzle, row, col, value);
-     let colTrue = solver.checkColPlacement(puzzle, row, col, value);
-    // let regionTrue = solver.checkRegionPlacement(puzzle, row, col, value);
+     let rowTrue = (row.length === 1 &&(/([a-i]|[A-I])/.test(row)));
+     let colTrue = (col.length === 1 && (/[0-9]/.test(col)));
 
+  /////////
       console.log(validTrue, coordTrue, rowTrue, colTrue);
       console.log("validTrue: " + validTrue, "coordTrue," + coordTrue, "rowTrue: " + rowTrue, "colTrue: " + colTrue);
-
-    if (!rowTrue || !colTrue || !coordTrue)
+  ////////
+  
+  if (!rowTrue || !colTrue || !coordTrue)
       {res.json({ error: 'Invalid coordinate'})}
       
-    //if (rowTrue && colTrue && coordTrue)
-    //{}
-      
-      console.log(row, col)
+ //check region, if false, error and push to conflicts array
 
-      //console.log(solver.validate(puzzle) + " valid check check")
+ let rowConflict = solver.checkRowPlacement(puzzle, row, col, value);
+ let colConflict = solver.checkColPlacement(puzzle, row, col, value);
+ let regConflict = solver.checkRegionPlacement(puzzle, row, col, value);
 
-    //If the object submitted to /api/check is missing puzzle, coordinate or value, the returned value will be { error: 'Required field(s) missing' }
+  console.log(colConflict + "colconflict");
+  console.log(rowConflict + "rowconflict");
+  console.log(regConflict + "regconflict");
+
+    let conflicts = [];    
+  if (colConflict === true || rowConflict === true || regConflict === true  )
+  {  if (rowConflict === true )
+      {conflicts.push("row"); }
+
+    if (colConflict === true )
+      {conflicts.push("col")  }    
+
+    if (regConflict === true )
+      {conflicts.push("region")} 
+
+  return res.json({ conflicts });  
+}
+
+if (!colConflict && !rowConflict && !regConflict)
+  {res.json({ valid: true })}
+   
+
+
+    
+
     });
     
   app.route('/api/solve')
     .post((req, res) => {
       const puzzle = req.body.puzzle;      
       let puzzleLength = puzzle.length;
+
 
       if (puzzleLength !== 81) 
         { res.json({error: "Expected puzzle to be 81 characters long"});  }
