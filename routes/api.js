@@ -10,12 +10,16 @@ module.exports = function (app) {
     .post(asyncHandler(async (req, res) => {
    try  {
     const { puzzle, coordinate, value } = req.body;
-      console.log(puzzle, coordinate, value)
-      if (!puzzle ||!coordinate ||!value)
+
+    if (!puzzle ||!coordinate ||!value)
         {res.json({ error: 'Required field(s) missing' })}
       
-     console.log(value.length)
-     if (value.length > 1 || /([a-z]|[A-Z])/g.test(value))
+let valLength = value.length;
+let valReg = /[1-9]/.test(value);   
+let valReg2 = /([a-z]|[A-Z])/g.test(value)
+ 
+
+     if (valLength > 1 || valReg2 || !valReg)
      {return res.json({error: "Invalid value"})}
 
 
@@ -31,35 +35,33 @@ module.exports = function (app) {
       if (!validTrue) 
         { return res.json({ error: 'Invalid characters in puzzle' })}
 
-
-  
-  //start true false checks to try to work on headers issue
-     // let headers = req.headers;     ??
-      // console.log(headers)     ??
  
      let coordTrue = (coordLength === 2);
      let rowTrue = (row.length === 1 &&(/([a-i]|[A-I])/.test(row)));
      let colTrue = (col.length === 1 && (/[1-9]/.test(col)));
 
   
-  if (!rowTrue || !colTrue || !coordTrue)
+  if (!coordTrue)
       {res.json({ error: 'Invalid coordinate' })}
+
+  if (coordTrue)
+    { if (!rowTrue || !colTrue || coordinate === undefined) 
+      { return res.json({ error: 'Invalid coordinate' }) }
+    }
+      
       
  //check region, if false, error and push to conflicts array
 
- let rowConflict = solver.checkRowPlacement(puzzle, row, col, value);
- let colConflict = solver.checkColPlacement(puzzle, row, col, value);
- let regConflict = solver.checkRegionPlacement(puzzle, row, col, value);
- let valPlaced = solver.checkValuePlacement(puzzle, row, col, value);
-
- console.log(valPlaced + "valplaced")
-
-//if valPlaced is true and the value is correct, we want to return valid: true
+ const rowConflict = solver.checkRowPlacement(puzzle, row, col, value);
+ const colConflict = solver.checkColPlacement(puzzle, row, col, value);
+ const regConflict = solver.checkRegionPlacement(puzzle, row, col, value);
+ const valPlaced = solver.checkValuePlacement(puzzle, row, col, value);
 
   let conflict = [];    
 
   if (!valPlaced)
- { if (colConflict === true || rowConflict === true || regConflict === true) 
+ { 
+  if (colConflict === true || rowConflict === true || regConflict === true) 
   {  if (rowConflict === true )
       {conflict.push("row"); }
 
@@ -69,14 +71,17 @@ module.exports = function (app) {
     if (regConflict === true )
       {conflict.push("region")} 
 
-  return res.json({ valid: false, conflict });  }
-}
+  return res.json({ valid: false, conflict });  
+  }// end nested if !colConflict === true
+
+  
+  if (!colConflict && !rowConflict && !regConflict)
+  {res.json({ valid: true })} 
+
+}//end !valPlaced
 
 
-if (!colConflict && !rowConflict && !regConflict)
-  {  res.json({ valid: true })}  
-
-if (valPlaced === true && regConflict)
+if (valPlaced && regConflict)
   {res.json({ valid: true })}
 
 }
@@ -85,29 +90,35 @@ if (valPlaced === true && regConflict)
 
 catch (e) { 
   if (e.message.includes("includes"))
-    {return { "error": "Invalid coordinate" }}
-  console.log(e.message);}
+    {return e.message = { "error": "Invalid coordinate" }}
+  console.log(e.message + " check");}
 
     }));
     
+
   app.route('/api/solve')
     .post(asyncHandler(async (req, res) =>{
  
  try {    
+
+  
+  
+  //start true false checks to try to work on headers issue
+  //   let headers = req.headers;     
+//      console.log(headers)    
    const puzzle = req.body.puzzle;      
       let puzzleLength = puzzle.length;
 
-      if (!puzzle)
-        {res.json({ error: 'Required field(s) missing' })}
+      if (puzzleLength !== 81 && solver.validate(puzzle))
+      {      
+         if (puzzleLength === 0 || puzzle === undefined)
+            {res.json({ error: "Required field missing" })}
 
-      if (puzzleLength !== 81) 
-        { res.json({error: "Expected puzzle to be 81 characters long"});  }
+        else  {res.json({error: "Expected puzzle to be 81 characters long"})}
+        }
 
-      if (puzzleLength === 81)
-      {
-
-    if (solver.validate(puzzle) === false) 
-       { return res.json({ error: 'Invalid characters in puzzle' })}
+     else if (!solver.validate(puzzle))
+          { return res.json({ error: 'Invalid characters in puzzle' })}  
 
     else {
 
@@ -117,8 +128,11 @@ catch (e) {
     res.json({ solution });
 
       } 
-    }}
+    }
 
-    catch (e) { console.log(e.message); }
+    catch (e) { 
+      if (e.message.includes("read") || e.message.includes("0"))
+        {return e.message = { "error": "Required field missing" }}
+      console.log(e.message + " solve"); }
   }));
 };

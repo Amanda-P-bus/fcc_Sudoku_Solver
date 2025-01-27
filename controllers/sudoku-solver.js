@@ -70,7 +70,6 @@ checkValuePlacement(puzzleString, row, col, value) {
 }
 
   checkRowPlacement(puzzleString, row, col, value) {
-    
     let rowVal = this.getRowVal(row);
 
     let newGrid =
