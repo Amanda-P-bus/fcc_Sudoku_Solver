@@ -89,8 +89,8 @@ if (valPlaced && regConflict)
 
 
 catch (e) { 
-  if (e.message.includes("includes"))
-    {return e.message = { "error": "Invalid coordinate" }}
+  if (e.message.includes("includes") || e.message.includes("headers") || e.message.includes("undefined"))
+    {return res.json({ "error": "Invalid coordinate" })}
   console.log(e.message + " check");}
 
     }));
@@ -132,7 +132,7 @@ catch (e) {
 
     catch (e) { 
       if (e.message.includes("read") || e.message.includes("0"))
-        {return e.message = { "error": "Required field missing" }}
+        {return res.json({ "error": "Required field missing" })}
       console.log(e.message + " solve"); }
   }));
 };
