@@ -48,6 +48,23 @@ getRowVal(row) {
    };
    return rowVal;
 }
+checkValuePlacement(puzzleString, row, col, value) {
+    
+  let rowVal = this.getRowVal(row);
+  let colVal = parseInt(col-1);
+
+  let newGrid =
+    typeof puzzleString === "string"
+      ? this.makeStringGrid(puzzleString)
+      : puzzleString; 
+
+  let numVal = parseInt(value);
+
+  if (newGrid[rowVal][colVal] === numVal)
+     { return true } 
+   else {return false}
+
+}
 
   checkRowPlacement(puzzleString, row, col, value) {
     
@@ -93,22 +110,12 @@ getRowVal(row) {
     typeof puzzleString === "string" ? 
     this.makeStringGrid(puzzleString) : puzzleString;
 
-
-    let conflicts = [];
-
     let colVal = parseInt(col-1);
     let rowVal = this.getRowVal(row);
     let valNum = parseInt(value);
-    let resArr = []
-    console.log(rowVal, colVal, valNum);
 
 
-//create regions to check against
-
-
-
-
-//if statements to check value entered against regions
+//if statements to check value entered against regions (defined within each if statement to look a little cleaner)
 
 if (rowVal < 3 && colVal < 3)
   {
@@ -176,9 +183,59 @@ if ((rowVal >= 6) && (colVal >= 6))
   }
 
   solve(puzzleString) {
-    
-  }
-}
 
+    let newGrid = 
+    typeof puzzleString === "string" ? 
+    this.makeStringGrid(puzzleString) : puzzleString;
+
+  
+    function isValid(newGrid, row, col, num) {
+      for (let i = 0; i < 9; i++) {
+        if (
+          (newGrid[row][i] === num && i !== col) ||
+          (newGrid[i][col] === num && i !== row) ||
+          (newGrid[3 * Math.floor(row / 3) + Math.floor(i / 3)][
+            3 * Math.floor(col / 3) + (i % 3)
+          ] === num &&
+            3 * Math.floor(row / 3) + Math.floor(i / 3) !== row &&
+            3 * Math.floor(col / 3) + (i % 3) !== col)
+        ) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    // Backtracking function to solve the Sudoku
+    function solve(newGrid) {
+      for (let row = 0; row < 9; row++) {
+        for (let col = 0; col < 9; col++) {
+          if (newGrid[row][col] !== 0 && !isValid(newGrid, row, col, newGrid[row][col]))
+            return false;
+          if (newGrid[row][col] === 0) {
+            for (let num = 1; num <= 9; num++) {
+              if (isValid(newGrid, row, col, num)) {
+                newGrid[row][col] = num;
+                if (solve(newGrid)) {
+                  return true;
+                }
+                newGrid[row][col] = 0;
+              }
+            }
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+
+    // Solve the Sudoku
+    if (solve(newGrid)) {
+      // Convert the solved 2D array back to a string
+      return newGrid.flat().join("");
+    } else {
+      return false;
+    }}
+}
 module.exports = SudokuSolver;
 

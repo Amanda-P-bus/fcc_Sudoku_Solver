@@ -1,6 +1,7 @@
 'use strict';
 
 const SudokuSolver = require('../controllers/sudoku-solver.js');
+const asyncHandler = require('express-async-handler');
 
 module.exports = function (app) {
   
@@ -8,10 +9,16 @@ module.exports = function (app) {
 
   app.route('/api/check')
     .post((req, res) => {
-      const { puzzle, coordinate, value } = req.body;
+   try  { 
+    const { puzzle, coordinate, value } = req.body;
       console.log(puzzle, coordinate, value)
       if (!puzzle ||!coordinate ||!value)
         {res.json({ error: 'Required field(s) missing' })}
+      
+     console.log(value.length)
+     if (value.length > 1 || /([a-z]|[A-Z])/g.test(value))
+     {return res.json({error: "Invalid value"})}
+
 
       let puzzleLength = puzzle.length;
       let row = coordinate[0]; //letter
@@ -25,6 +32,7 @@ module.exports = function (app) {
       if (!validTrue) 
         { return res.json({ error: 'Invalid characters in puzzle' })}
 
+
   
   //start true false checks to try to work on headers issue
      // let headers = req.headers;     ??
@@ -34,45 +42,43 @@ module.exports = function (app) {
      let rowTrue = (row.length === 1 &&(/([a-i]|[A-I])/.test(row)));
      let colTrue = (col.length === 1 && (/[0-9]/.test(col)));
 
-  /////////
-      console.log(validTrue, coordTrue, rowTrue, colTrue);
-      console.log("validTrue: " + validTrue, "coordTrue," + coordTrue, "rowTrue: " + rowTrue, "colTrue: " + colTrue);
-  ////////
   
   if (!rowTrue || !colTrue || !coordTrue)
-      {res.json({ error: 'Invalid coordinate'})}
+      {res.json({ error: 'Invalid coordinate' })}
       
  //check region, if false, error and push to conflicts array
 
  let rowConflict = solver.checkRowPlacement(puzzle, row, col, value);
  let colConflict = solver.checkColPlacement(puzzle, row, col, value);
  let regConflict = solver.checkRegionPlacement(puzzle, row, col, value);
+ let valPlaced = solver.checkValuePlacement(puzzle, row, col, value);
 
-  console.log(colConflict + "colconflict");
-  console.log(rowConflict + "rowconflict");
-  console.log(regConflict + "regconflict");
+ console.log(valPlaced)
 
-    let conflicts = [];    
-  if (colConflict === true || rowConflict === true || regConflict === true  )
+//if valPlaced is true and the value is correct, we want to return valid: true
+
+  let conflict = [];    
+
+  if (colConflict === true || rowConflict === true || regConflict === true) 
   {  if (rowConflict === true )
-      {conflicts.push("row"); }
+      {conflict.push("row"); }
 
     if (colConflict === true )
-      {conflicts.push("col")  }    
+      {conflict.push("column")  }    
 
     if (regConflict === true )
-      {conflicts.push("region")} 
+      {conflict.push("region")} 
 
-  return res.json({ conflicts });  
+  return res.json({ valid: false, conflict });  
 }
 
-if (!colConflict && !rowConflict && !regConflict)
-  {res.json({ valid: true })}
-   
 
 
-    
+if (!colConflict && !rowConflict && !regConflict && valPlaced === true)
+  {res.json({ valid: true })}    
+}
 
+catch (e) { console.log(e.message); }
     });
     
   app.route('/api/solve')
@@ -80,6 +86,8 @@ if (!colConflict && !rowConflict && !regConflict)
       const puzzle = req.body.puzzle;      
       let puzzleLength = puzzle.length;
 
+      if (!puzzle)
+        {res.json({ error: 'Required field(s) missing' })}
 
       if (puzzleLength !== 81) 
         { res.json({error: "Expected puzzle to be 81 characters long"});  }
@@ -90,24 +98,15 @@ if (!colConflict && !rowConflict && !regConflict)
     if (solver.validate(puzzle) === false) 
        { return res.json({ error: 'Invalid characters in puzzle' })}
 
-        else {console.log("move on to solving") } 
+    else {
+      
+    const solution = solver.solve(puzzle);
+    if (!solution) 
+    {return res.json({ error: solver.validate(puzzle) })}
+    res.json({ solution });
 
-      }
-     // console.log(puzzle)
-     // console.log(solver.validate(puzzle) + " solver")
-    
+      } 
 
-    /*
-    
-  
-      const solution = solver.solve(puzzle);
-      console.log(solution);
-      if (!solution)
-      { console.log("Cannot solve");  }
-       // return res.json({ error: "Puzzle cannot be solved" });
-
-      res.json({ solution });
-      console.log(solution)
-*/
-    });
+    }
+  });
 };
