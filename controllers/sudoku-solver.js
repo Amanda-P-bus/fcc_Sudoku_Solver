@@ -19,6 +19,7 @@ class SudokuSolver {
         .map((item) =>
              (item === "." ? 0 : +item))
       )}
+
      return grid;
   }
 
@@ -51,7 +52,7 @@ getRowVal(row) {
 checkValuePlacement(puzzleString, row, col, value) {
     
   let rowVal = this.getRowVal(row);
-  let colVal = parseInt(col-1);
+  let colVal = parseInt(col -1 );
 
   let newGrid =
     typeof puzzleString === "string"

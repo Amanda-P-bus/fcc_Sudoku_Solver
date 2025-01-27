@@ -1,15 +1,14 @@
 'use strict';
-
 const SudokuSolver = require('../controllers/sudoku-solver.js');
 const asyncHandler = require('express-async-handler');
-
+import regeneratorRuntime from "regenerator-runtime";
 module.exports = function (app) {
   
   let solver = new SudokuSolver();
 
   app.route('/api/check')
-    .post((req, res) => {
-   try  { 
+    .post(asyncHandler(async (req, res) => {
+   try  {
     const { puzzle, coordinate, value } = req.body;
       console.log(puzzle, coordinate, value)
       if (!puzzle ||!coordinate ||!value)
@@ -78,12 +77,18 @@ if (!colConflict && !rowConflict && !regConflict && valPlaced === true)
   {res.json({ valid: true })}    
 }
 
-catch (e) { console.log(e.message); }
-    });
+catch (e) { 
+  if (e.message.includes("includes"))
+    {return { "error": "Invalid coordinate" }}
+  console.log(e.message);}
+
+    }));
     
   app.route('/api/solve')
-    .post((req, res) => {
-      const puzzle = req.body.puzzle;      
+    .post(asyncHandler(async (req, res) =>{
+ 
+ try {    
+   const puzzle = req.body.puzzle;      
       let puzzleLength = puzzle.length;
 
       if (!puzzle)
@@ -99,14 +104,15 @@ catch (e) { console.log(e.message); }
        { return res.json({ error: 'Invalid characters in puzzle' })}
 
     else {
-      
+
     const solution = solver.solve(puzzle);
     if (!solution) 
     {return res.json({ error: solver.validate(puzzle) })}
     res.json({ solution });
 
       } 
+    }}
 
-    }
-  });
+    catch (e) { console.log(e.message); }
+  }));
 };
