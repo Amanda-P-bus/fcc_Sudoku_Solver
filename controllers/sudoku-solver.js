@@ -59,6 +59,8 @@ checkValuePlacement(puzzleString, row, col, value) {
       ? this.makeStringGrid(puzzleString)
       : puzzleString; 
 
+      console.log(newGrid[0][0]);
+
   let numVal = parseInt(value);
 
   if (newGrid[rowVal][colVal] === numVal)

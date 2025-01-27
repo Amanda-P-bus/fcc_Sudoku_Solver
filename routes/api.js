@@ -39,7 +39,7 @@ module.exports = function (app) {
  
      let coordTrue = (coordLength === 2);
      let rowTrue = (row.length === 1 &&(/([a-i]|[A-I])/.test(row)));
-     let colTrue = (col.length === 1 && (/[0-9]/.test(col)));
+     let colTrue = (col.length === 1 && (/[1-9]/.test(col)));
 
   
   if (!rowTrue || !colTrue || !coordTrue)
@@ -52,13 +52,14 @@ module.exports = function (app) {
  let regConflict = solver.checkRegionPlacement(puzzle, row, col, value);
  let valPlaced = solver.checkValuePlacement(puzzle, row, col, value);
 
- console.log(valPlaced)
+ console.log(valPlaced + "valplaced")
 
 //if valPlaced is true and the value is correct, we want to return valid: true
 
   let conflict = [];    
 
-  if (colConflict === true || rowConflict === true || regConflict === true) 
+  if (!valPlaced)
+ { if (colConflict === true || rowConflict === true || regConflict === true) 
   {  if (rowConflict === true )
       {conflict.push("row"); }
 
@@ -68,14 +69,19 @@ module.exports = function (app) {
     if (regConflict === true )
       {conflict.push("region")} 
 
-  return res.json({ valid: false, conflict });  
+  return res.json({ valid: false, conflict });  }
 }
 
 
+if (!colConflict && !rowConflict && !regConflict)
+  {  res.json({ valid: true })}  
 
-if (!colConflict && !rowConflict && !regConflict && valPlaced === true)
-  {res.json({ valid: true })}    
+if (valPlaced === true && regConflict)
+  {res.json({ valid: true })}
+
 }
+
+
 
 catch (e) { 
   if (e.message.includes("includes"))
@@ -107,7 +113,7 @@ catch (e) {
 
     const solution = solver.solve(puzzle);
     if (!solution) 
-    {return res.json({ error: solver.validate(puzzle) })}
+    {return res.json({ error: "Puzzle cannot be solved" })}
     res.json({ solution });
 
       } 
